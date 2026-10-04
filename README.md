@@ -1,7 +1,7 @@
-# OpsInsight — Operational Issue, SLA & Process Intelligence Platform
+# OpsInsight — Operasyonel Sorun, SLA & Süreç Zekası Platformu
 
-> **Enterprise Portfolio Project** — End-to-end operational intelligence platform built on **Microsoft Power Platform** and **Microsoft Fabric**.  
-> Fictional organization: **Northstar Operations Group** · All data is synthetic.
+> **Kurumsal Portföy Projesi** — **Microsoft Power Platform** ve **Microsoft Fabric** üzerinde geliştirilmiş uçtan uca operasyonel zeka ve süreç analitiği platformu.  
+> Kurgusal organizasyon: **Northstar Operations Group** · Tüm veriler sentetiktir.
 
 ![Power Apps](https://img.shields.io/badge/Power%20Apps-742774?logo=powerapps&logoColor=white)
 ![Dataverse](https://img.shields.io/badge/Dataverse-088142?logo=microsoft&logoColor=white)
@@ -13,286 +13,283 @@
 
 ---
 
-## 📌 Executive Summary
+## 📌 Yönetici Özeti (Executive Summary)
 
-In enterprise environments, internal operational issues (hardware failures, delayed approvals, invoice errors, ERP sync breaks) are frequently managed through unstructured channels — email, spreadsheets, Teams chats and phone calls. This creates an operational blind spot where leadership cannot measure workload, enforce SLA agreements or identify process bottlenecks.
+Kurumsal şirketlerde departmanlar arası operasyonel aksaklıklar (donanım arızaları, geciken onaylar, hatalı faturalar, sistem entegrasyon kopuklukları) sıklıkla e-posta, Excel tabloları, Teams yazışmaları veya telefon görüşmeleri gibi dağınık kanallardan yürütülür. Bu durum, yönetimin iş yükünü ölçemediği, SLA sözleşmelerini denetleyemediği ve süreç darboğazlarını tespit edemediği ciddi bir operasyonel kör nokta oluşturur.
 
-**OpsInsight** centralizes issue capture across all departments and transforms daily operational activity into **measurable, audit-ready process intelligence**.
+**OpsInsight**, tüm departmanlardaki sorun bildirimlerini tek bir merkezde toplar ve günlük operasyonel hareketleri **ölçülebilir, denetlenebilir ve aksiyona dönüştürülebilir süreç zekasına** dönüştürür.
 
-**Core Operating Principle: Capture → Manage → Monitor → Analyze → Improve**
+**Temel Çalışma Prensibi: Kaydet → Yönet → İzle → Analiz Et → İyileştir**
 
 ```
-Employees / Agents / Managers
-          │
-          ▼
-   Power Apps Canvas App
-   (Live issue management & submission)
-          │
-          ▼
-   Microsoft Dataverse
-   (11 relational tables & business logic)
-     /         \
-    ▼           ▼
-Power Automate   Microsoft Fabric (Lakehouse)
-(SLA & alerts)          │
-                        ▼
-                 Semantic Model (Star Schema)
+Çalışanlar / Operasyon Temsilcileri / Yöneticiler
                         │
                         ▼
-                 Power BI Analytics
-                 (9-page executive suite)
+             Power Apps Canvas App
+         (Canlı talep yönetimi ve kayıt formu)
+                        │
+                        ▼
+               Microsoft Dataverse
+     (11 ilişkisel tablo ve operasyonel iş kuralları)
+           /                         \
+          ▼                           ▼
+    Power Automate          Microsoft Fabric (Lakehouse)
+(Gerçek zamanlı SLA & bildirim)       │
+                                      ▼
+                        Semantic Model (Star Schema)
+                                      │
+                                      ▼
+                             Power BI Analitiği
+                          (9 sayfalık kurumsal süit)
 ```
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ Sistem Mimarisi
 
-The solution cleanly separates the **Operational Layer** (live business application, workflow automation, operational data store) from the **Analytical Layer** (cloud data warehouse, semantic model, executive business intelligence) — mirroring real-world enterprise architectures.
+Çözüm; canlı iş uygulamalarının ve otomasyonun çalıştığı **Operasyonel Katman** ile büyük veri ambarı ve analitik modellemenin çalıştığı **Analitik Katman**'ı birbirinden net bir şekilde ayırır. Bu iki katmanlı yapı, gerçek kurumsal veri platformu mimarisini birebir yansıtır.
 
 ```mermaid
 flowchart TD
-    PY["Python 3.9 + Pandas + Faker<br/>Synthetic Relational Generator"] --> CSV["11 Relational CSV Datasets"]
+    PY["Python 3.9 + Pandas + Faker<br/>Sentetik İlişkisel Veri Üreticisi"] --> CSV["11 İlişkisel CSV Veri Seti"]
 
-    subgraph OP["Operational Layer — Power Platform"]
-        CSV --> DV["Microsoft Dataverse<br/>11 Custom Tables (cr489_*)"]
-        DV --> PA["Power Apps<br/>Issue Management & Intake App"]
-        DV --> PF["Power Automate<br/>Real-Time SLA & Escalation Flows"]
+    subgraph OP["Operasyonel Katman — Power Platform"]
+        CSV --> DV["Microsoft Dataverse<br/>11 Özel Tablo (cr489_*)"]
+        DV --> PA["Power Apps<br/>Sorun Yönetimi ve Talep Açma Uygulaması"]
+        DV --> PF["Power Automate<br/>Gerçek Zamanlı SLA ve Eskalasyon Akışları"]
     end
 
-    subgraph AN["Analytical Layer — Microsoft Fabric & Power BI"]
-        CSV --> LH["Fabric Lakehouse<br/>Delta Parquet Tables"]
-        LH --> SM["Semantic Model<br/>1:N Star Schema & DAX Measures"]
-        SM --> PBI["Power BI Analytics Suite<br/>9 Interactive Pages"]
+    subgraph AN["Analitik Katman — Microsoft Fabric & Power BI"]
+        CSV --> LH["Fabric Lakehouse<br/>Delta Parquet Tabloları"]
+        LH --> SM["Semantic Model<br/>1:N Yıldız Şema & DAX Ölçüleri"]
+        SM --> PBI["Power BI Analitik Süiti<br/>9 İnteraktif Rapor Sayfası"]
     end
 
-    SQL["PostgreSQL / Spark SQL<br/>Analytical & Audit Scripts"] -.-> CSV
+    SQL["PostgreSQL / Spark SQL<br/>Analitik ve Denetim Sorguları"] -.-> CSV
 ```
 
 ---
 
-## 🗄️ Relational Data Model (11 Tables)
+## 🗄️ İlişkisel Veri Modeli (11 Tablo)
 
-A realistic 2,200-issue operational dataset with over 11,000 historical lifecycle events was generated using Python and loaded into both Dataverse and Fabric.
+Python ile oluşturulan ve gerçekçi iş mantığı içeren 2.200 bilet ve 11.000'i aşkın yaşam döngüsü olayı, hem Dataverse'e hem de Microsoft Fabric Lakehouse'a yüklenmiştir.
 
-### Semantic Model Relationship Diagram (Star Schema)
-The analytical model follows a Kimball-style star schema centered on `issues`, connected via one-to-many (`1:N`) single-directional relationships to dimension tables:
+### Semantic Model İlişki Şeması (Star Schema)
+Analitik model; merkezde `issues` (hareket) tablosunun yer aldığı ve etrafındaki boyut tablolarına bire-çok (`1:N`) tek yönlü filtreleme ile bağlandığı Kimball yıldız şeması (Star Schema) standardındadır:
 
 ![Fabric Semantic Model](screenshots/fabric-semantic-model.png)
 
 ```mermaid
 erDiagram
-    DEPARTMENTS ||--o{ TEAMS : contains
-    DEPARTMENTS ||--o{ CATEGORIES : classifies
-    TEAMS ||--o{ EMPLOYEES : includes
-    CATEGORIES ||--o{ ISSUES : categorizes
-    SLA_RULES ||--o{ ISSUES : "enforces targets"
-    EMPLOYEES ||--o{ ISSUES : "assigns to"
-    ROOT_CAUSES ||--o{ ISSUES : diagnoses
-    RESOLUTION_CODES ||--o{ ISSUES : resolves
-    ISSUES ||--o{ ISSUE_HISTORY : "audit log"
-    ISSUES ||--o{ COMMENTS : "activity feed"
-    ISSUES ||--o{ ESCALATIONS : escalates
+    DEPARTMENTS ||--o{ TEAMS : içerir
+    DEPARTMENTS ||--o{ CATEGORIES : tanımlar
+    TEAMS ||--o{ EMPLOYEES : barındırır
+    CATEGORIES ||--o{ ISSUES : sınıflandırır
+    SLA_RULES ||--o{ ISSUES : "hedef belirler"
+    EMPLOYEES ||--o{ ISSUES : "atanır"
+    ROOT_CAUSES ||--o{ ISSUES : açıklar
+    RESOLUTION_CODES ||--o{ ISSUES : kapatır
+    ISSUES ||--o{ ISSUE_HISTORY : "olay günlüğü"
+    ISSUES ||--o{ COMMENTS : "aktivite akışı"
+    ISSUES ||--o{ ESCALATIONS : "kriz eskalasyonu"
 ```
 
-| Table Name | Records | Description | Primary Key |
+| Tablo Adı | Kayıt Sayısı | Açıklama | Birincil Anahtar |
 |---|---:|---|---|
-| `issues` | 2,200 | Core fact table: Priority, Status, SLA deadlines, timestamps | `IssueId` |
-| `issue_history` | 11,232 | Append-only audit log: Status changes, assignments, transfers | `HistoryId` |
-| `comments` | 4,073 | Operational activity log: Internal team notes & requester updates | `CommentId` |
-| `escalations` | 315 | Manager intervention records when SLA thresholds are breached | `EscalationId` |
-| `employees` | 96 | Directory of requesters, operational agents and team managers | `EmployeeId` |
-| `categories` | 24 | Standard operational categories mapped to departments | `CategoryId` |
-| `teams` | 10 | Specialized operational teams (IT Infrastructure, Finance Ops...) | `TeamId` |
-| `root_causes` | 10 | Standardized root cause taxonomy (Software Bug, User Error...) | `RootCauseId` |
-| `resolution_codes` | 9 | Closing classification (Code Fix, Config Change, Workaround...) | `ResolutionCodeId` |
-| `departments` | 6 | IT, Finance, Procurement, HR, Operations, Sales Ops | `DepartmentId` |
-| `sla_rules` | 4 | Priority-based SLA targets (Critical: 4h, High: 8h, Med: 24h, Low: 72h) | `SLAId` |
+| `issues` | 2.200 | Ana hareket tablosu: Öncelik, Durum, SLA hedefleri, zaman damgaları | `IssueId` |
+| `issue_history` | 11.232 | Süreç denetim günlüğü: Durum değişiklikleri, atamalar, transferler | `HistoryId` |
+| `comments` | 4.073 | Operasyonel aktivite günlüğü: Dahili ekip notları ve dış yazışmalar | `CommentId` |
+| `escalations` | 315 | SLA aşımlarında üst yöneticiye yapılan müdahale kayıtları | `EscalationId` |
+| `employees` | 96 | Talep sahipleri, operasyon temsilcileri ve ekip müdürleri rehberi | `EmployeeId` |
+| `categories` | 24 | Departmanlarla eşleştirilmiş standart operasyonel kategori listesi | `CategoryId` |
+| `teams` | 10 | Uzmanlaşmış operasyon ekipleri (IT Altyapı, Finans Operasyon...) | `TeamId` |
+| `root_causes` | 10 | Standart kök neden kataloğu (Yazılım Hatası, Kullanıcı Hatası...) | `RootCauseId` |
+| `resolution_codes` | 9 | Kapanış yöntemi sınıflandırması (Kod Düzeltme, Geçici Yama...) | `ResolutionCodeId` |
+| `departments` | 6 | IT, Finans, Satın Alma, İK, Operasyon, Satış Operasyonları | `DepartmentId` |
+| `sla_rules` | 4 | Öncelik bazlı SLA hedefleri (Kritik: 4h, Yüksek: 8h, Orta: 24h, Düşük: 72h) | `SLAId` |
 
 ---
 
-## 📊 Power BI Analytics Suite (9 Pages)
+## 📊 Power BI Analitik Süiti (9 Sayfa)
 
-The Power BI reporting layer provides multi-dimensional operational insights across 9 dedicated analytical dashboards:
-
----
-
-### Page 1: Operasyonel Genel Bakış & KPI Özeti (Executive Overview)
-High-level operational health dashboard showing headline volume, backlog, SLA compliance rate (78.14%), average resolution time (17.84h), department volume distribution, top categories treemap, and team workloads.
-
-![Page 1: Executive Overview](screenshots/powerbi-01-kpi-dashboard.png)
+Raporlama katmanı, operasyonel performansı 9 bağımsız analitik sayfada çok boyutlu olarak sunar:
 
 ---
 
-### Page 2: Departman & Kategori Analizi (Department & Category Breakdown)
-Deep-dive into operational friction points across business units. Features horizontal volume ranking of all 24 categories, priority distribution donut, and interactive operational team slicer buttons.
+### Sayfa 1: Operasyonel Genel Bakış & KPI Özeti (Executive Overview)
+Şirket genelindeki talep hacmini, birikmiş iş yükünü (492 açık talep), SLA uyum oranını (%78,14), ortalama çözüm süresini (17,84 saat), departman dağılımını, en yoğun ilk 7 kategoriyi (Treemap) ve operasyon ekiplerinin iş yükünü gösteren üst yönetim özet ekranı.
 
-![Page 2: Department & Category](screenshots/powerbi-02-department-category.png)
-
----
-
-### Page 3: SLA & Eskalasyon Performansı (SLA & Escalation Intelligence)
-Performance evaluation combining a **Team Risk & Performance Scatter Matrix** (Volume vs. Resolution Time vs. Breaches), team-by-priority SLA breach cross-tab, an executive **SLA Target Gauge** (%78.14 vs. %90.00 target), and escalation priority breakdown.
-
-![Page 3: SLA & Escalation](screenshots/powerbi-03-sla-escalation.png)
+![Sayfa 1: Operasyonel Genel Bakış](screenshots/powerbi-01-kpi-dashboard.png)
 
 ---
 
-### Page 4: Kök Neden & Çözüm Kalitesi (Root Cause & Resolution Intelligence)
-Root cause analysis featuring a categorical **Treemap** of failure causes (Data Quality, Missing Approval, Process Design...), department-level chronic reopened issues analysis, closing resolution methods, and a **Root Cause vs. Resolution Cross-Audit Matrix**.
+### Sayfa 2: Departman & Kategori Analizi (Department & Category Breakdown)
+İş birimlerindeki operasyonel aksaklıkların derinlemesine analizi. 24 kategorinin yatay hacim sıralaması, öncelik seviyeleri donutu ve interaktif operasyon ekibi filtre butonları.
 
-![Page 4: Root Cause](screenshots/powerbi-04-root-cause.png)
-
----
-
-### Page 5: Süreç Zekası & Darboğaz Analizi (Process Intelligence & Audit Log)
-Mining 11,232 lifecycle events to uncover operational bottlenecks: Lifecycle event breakdown, inter-team transfer volumes, and a **Status Transition Matrix** showing exact transition frequencies (In Progress → Waiting, Assigned → In Progress).
-
-![Page 5: Process Intelligence](screenshots/powerbi-05-process-intelligence.png)
+![Sayfa 2: Departman & Kategori](screenshots/powerbi-02-department-category.png)
 
 ---
 
-### Page 6: Operasyon Masası & Detay Denetimi (Team Workbench & Ledger)
-Interactive team manager workbench featuring dual-metric agent capacity analysis (Total Issues vs. Open Backlog per agent), multi-select slicers, and a real-time ticket audit ledger.
+### Sayfa 3: SLA & Eskalasyon Performansı (SLA & Escalation Intelligence)
+Performans değerlendirmesini bir araya getiren sayfa: **Ekip Risk ve Performans Matrisi (Scatter Plot)** (İş Hacmi vs. Çözüm Süresi vs. İhlaller), takımlara ve önceliklere göre ihlal tablosu, **SLA Hedef Kadranı (%78 Uyum vs. %90 Hedef)** ve 315 eskalasyonun öncelik dağılımı.
 
-![Page 6: Team Workbench](screenshots/powerbi-06-team-workbench.png)
-
----
-
-### Page 7: Departman Kıyaslama & Verimlilik Karnesi (Department Benchmarking)
-Side-by-side benchmarking of the 6 operational departments: Efficiency scatter plot, an executive **Department Operational Scorecard Table** (Volume, Open, Resolution Time, SLA%, Reopen Count), priority compositions, and average duration treemap.
-
-![Page 7: Department Benchmarking](screenshots/powerbi-07-department-benchmarking.png)
+![Sayfa 3: SLA & Eskalasyon](screenshots/powerbi-03-sla-escalation.png)
 
 ---
 
-### Page 8: İletişim & İş Birliği Analizi (Voice of Operations & Activity Feed)
-Analysis of 4,073 operational comments: Internal team notes (24.11%) vs. public requester communications (75.89%), active communication contributors, and a **Live Activity Feed Table** displaying actual ticket commentary and timestamps.
+### Sayfa 4: Kök Neden & Çözüm Kalitesi (Root Cause & Resolution Intelligence)
+Kök neden analitiği: Sorun yaratan faktörlerin ağırlıklı **Ağaç Haritası (Treemap)** (Veri Kalitesi, Eksik Onay, Süreç Tasarımı...), departman bazında tekrar açılan (Reopen) kronik sorunlar, kapanış yöntemleri ve **Kök Neden vs. Çözüm Yolu Çapraz Denetim Matrisi**.
 
-![Page 8: Collaboration & Comments](screenshots/powerbi-08-collaboration-comments.png)
-
----
-
-### Page 9: Operasyonel Risk & Süreç Hunisi (Operational Risk & Funnel Management)
-Conversion and risk control page featuring an **Operational Process Funnel** (Closed → In Progress → Resolved → Assigned), overall SLA compliance ratio donut, manager escalation distribution, and an **Urgent Critical Action Desk ("Yangın Masası")** filtering unresolved critical issues for immediate intervention.
-
-![Page 9: Risk & Funnel](screenshots/powerbi-09-operational-risk-funnel.png)
+![Sayfa 4: Kök Neden](screenshots/powerbi-04-root-cause.png)
 
 ---
 
-## 📱 Power Apps — Operational Issue Management App
+### Sayfa 5: Süreç Zekası & Darboğaz Analizi (Process Intelligence & Audit Log)
+11.232 yaşam döngüsü olayını analiz eden süreç madenciliği ekranı: Yaşam döngüsü olay dağılımı, ekipler arası transfer hacmi ve taleplerin hangi aşamada tıkandığını gösteren **Statüler Arası Geçiş Akış Matrisi** (In Progress → Waiting, Assigned → In Progress).
 
-Built on Microsoft Dataverse to provide role-based issue intake and status management:
-
-### 1. Active Issue Registry (`Etkin Sorun Kaydı`)
-Live operational workbench displaying all active issues with multi-field search, filtering, and status tracking:
-
-![Power Apps Issue List](screenshots/powerapps-list.png)
-
-### 2. Issue Intake & Edit Form
-Standardized submission form capturing title, description, priority, category, department routing, and SLA deadlines:
-
-![Power Apps Issue Form](screenshots/powerapps-form.png)
+![Sayfa 5: Süreç Zekası](screenshots/powerbi-05-process-intelligence.png)
 
 ---
 
-## 🗃️ Microsoft Dataverse — Custom Data Layer
+### Sayfa 6: Operasyon Masası & Detay Denetimi (Team Workbench & Ledger)
+Ekip liderleri için tasarlanmış interaktif çalışma masası: Temsilci başına toplam ve açık iş yükü (Kapasite Analizi), çoklu filtre dilimleyicileri ve tek tek biletlerin denetlendiği canlı operasyon tablosu.
 
-11 relational custom tables (`cr489_*`) provisioned in Microsoft Dataverse with custom schemas, primary keys, relationships, and lookups:
-
-![Dataverse Tables](screenshots/dataverse-tables.png)
-
----
-
-## ⚡ Power Automate — Event-Driven SLA Automation
-
-Automated cloud flow configured to monitor Dataverse and trigger instant notifications:
-
-1. **Trigger:** `When a row is added, modified or deleted` — Microsoft Dataverse (Scope: Organization)
-2. **Action:** `Send an email (V2)` — Office 365 Outlook delivering ticket number, priority, summary and SLA requirements.
-
-![Power Automate Flow](screenshots/powerautomate-flow.png)
+![Sayfa 6: Operasyon Masası](screenshots/powerbi-06-team-workbench.png)
 
 ---
 
-## 💻 Python & SQL Engineering Layer
+### Sayfa 7: Departman Kıyaslama & Verimlilik Karnesi (Department Benchmarking)
+6 operasyonel departmanın yan yana kıyaslanması: Hız ve verimlilik dağılım grafiği, resmi **Departman Operasyon Başarı Karnesi Tablosu** (Hacim, Açık İş, Çözüm Saati, SLA%, Yeniden Açılma), departman öncelik oranları ve ortalama süre kutuları.
 
-### Synthetic Data Generator (`python/generate_data.py`)
-Generates 11 relational datasets using Pandas and Faker with built-in realistic business logic:
-- Business-hours SLA calculation
-- Intentional variance in department efficiency (e.g., Procurement SLA challenges, IT high volume)
-- Realistic lifecycle transition chains in `issue_history`
-
-### Data Quality Validator (`python/validate_data.py`)
-Automated validation script testing:
-- Primary / Foreign key referential integrity across all 11 tables
-- Timestamp chronology checks (`CreatedAt <= FirstResponseAt <= ResolvedAt <= ClosedAt`)
-- Null value thresholds and valid enum constraints
-
-### Analytical Reference Queries (`sql/`)
-PostgreSQL-compatible SQL scripts demonstrating query-level analysis:
-- `01_schema_reference.sql`: Full DDL with primary and foreign keys
-- `02_operational_queries.sql`: Backlog calculation, department volume rankings
-- `03_sla_analysis.sql`: Compliance rates, breach duration statistics
-- `04_process_analysis.sql`: Stage transition durations and bottleneck identification
-- `05_data_quality_checks.sql`: Automated SQL test assertions
+![Sayfa 7: Departman Kıyaslama](screenshots/powerbi-07-department-benchmarking.png)
 
 ---
 
-## 📂 Project Structure
+### Sayfa 8: İletişim & İş Birliği Analizi (Voice of Operations & Activity Feed)
+4.073 operasyonel yorumun analizi: Dahili ekip içi notlar (%24,11) ile talep sahibi dış yazışmaları (%75,89), en aktif yorumcular ve gerçek bilet yorumlarının anlık aktığı **Canlı İletişim Akışı & Yorum Günlüğü Tablosu (Activity Feed)**.
+
+![Sayfa 8: İletişim & İş Birliği](screenshots/powerbi-08-collaboration-comments.png)
+
+---
+
+### Sayfa 9: Operasyonel Risk & Süreç Hunisi (Operational Risk & Funnel Management)
+Dönüşüm ve risk kontrol sayfası: **Operasyonel Süreç Hunisi (Funnel Chart)** (Kapalı → İncelemede → Çözüldü → Atandı), genel SLA uyum halkası, kriz karşılayan 10 yöneticinin dağılımı ve derhal aksiyon bekleyen çözülmemiş kritik biletleri listeleyen **Acil Müdahale Masası ("Yangın Masası")**.
+
+![Sayfa 9: Operasyonel Risk](screenshots/powerbi-09-operational-risk-funnel.png)
+
+---
+
+## 📱 Power Apps — Operasyonel Talep Yönetimi Uygulaması
+
+Microsoft Dataverse üzerinde inşa edilmiş, çalışanların bilet açabildiği ve operasyon ekiplerinin durum güncelleyebildiği canlı tuval uygulaması:
+
+### 1. Canlı Bilet Listesi (`Etkin Sorun Kaydı`)
+Tüm aktif taleplerin listelendiği, çoklu arama ve filtreleme destekleyen operasyonel liste arayüzü:
+
+![Power Apps Bilet Listesi](screenshots/powerapps-list.png)
+
+### 2. Talep Kayıt & Düzenleme Formu
+Başlık, açıklama, öncelik, kategori, departman yönlendirmesi ve SLA teslim tarihlerini toplayan standart giriş formu:
+
+![Power Apps Talep Formu](screenshots/powerapps-form.png)
+
+---
+
+## 🗃️ Microsoft Dataverse — Özel Veri Katmanı
+
+Microsoft Dataverse ortamında oluşturulmuş; özel şemalar, birincil anahtarlar ve ilişkisel arama (lookup) alanları barındıran 11 kurumsal tablo (`cr489_*`):
+
+![Dataverse Tabloları](screenshots/dataverse-tables.png)
+
+---
+
+## ⚡ Power Automate — Olay Odaklı SLA Otomasyonu
+
+Dataverse'i gerçek zamanlı izleyen ve anında aksiyon alan otomatik bulut akışı:
+
+1. **Tetikleyici (Trigger):** `Bir satır eklendiğinde, değiştirildiğinde veya silindiğinde` — Microsoft Dataverse (Kapsam: Kuruluş / Organization)
+2. **Eylem (Action):** `E-posta gönder (V2)` — Office 365 Outlook üzerinden talep numarası, öncelik, başlık ve açıklama bilgilerini içeren otomatik bildirim.
+
+![Power Automate Akış Tasarımı](screenshots/powerautomate-flow.png)
+
+---
+
+## 💻 Python & SQL Veri Mühendisliği Katmanı
+
+### Sentetik Veri Üreticisi (`python/generate_data.py`)
+Pandas ve Faker kütüphaneleri kullanılarak 11 ilişkisel tabloyu gerçekçi iş mantığı kurallarıyla üretir:
+- Mesai saatlerine duyarlı SLA hesaplama kuralları
+- Departmanlar arası kasıtlı performans varyansları (Satın Alma departmanındaki tedarikçi gecikmeleri, IT'deki yüksek hacim)
+- `issue_history` tablosundaki mantıksal yaşam döngüsü durum geçiş zincirleri
+
+### Veri Kalitesi Doğrulayıcısı (`python/validate_data.py`)
+Otomatik doğrulama scripti:
+- 11 tablonun tamamında birincil ve yabancı anahtar (PK-FK) referans bütünlüğü testleri
+- Kronolojik tutarlılık kontrolleri (`CreatedAt <= FirstResponseAt <= ResolvedAt <= ClosedAt`)
+- Null değer eşikleri ve geçerli enum kısıtlamaları
+
+### Analitik Referans SQL Sorguları (`sql/`)
+PostgreSQL ve Spark SQL uyumlu derinlemesine analiz sorguları:
+- [`01_schema_reference.sql`](sql/01_schema_reference.sql): Birincil ve yabancı anahtarlı tam DDL şeması
+- [`02_operational_queries.sql`](sql/02_operational_queries.sql): Backlog hesaplama, departman hacim sıralamaları
+- [`03_sla_analysis.sql`](sql/03_sla_analysis.sql): SLA uyum oranları, gecikme süresi istatistikleri
+- [`04_process_analysis.sql`](sql/04_process_analysis.sql): Aşama geçiş süreleri ve darboğaz tespiti
+- [`05_data_quality_checks.sql`](sql/05_data_quality_checks.sql): Otomatik SQL doğrulama testleri
+- [`06_advanced_operational_analytics.sql`](sql/06_advanced_operational_analytics.sql): İlk Yanıt (MTTA) ve Çözüm (MTTR) süresi, pinpon transferler, ihlal derinliği, temsilci karnesi, statü bekleme süreleri ve kümülatif backlog trendi
+
+---
+
+## 📂 Proje Dizin Yapısı
 
 ```
 opsinsight-power-platform/
-├── README.md                          # Comprehensive project documentation
-├── LICENSE                            # MIT License
-├── data/                              # Data storage
-│   ├── generated/                     # Generated relational CSV datasets (11 files)
-│   └── excel/                         # Spreadsheet backups for Dataverse import
-├── docs/                              # Architecture and design specifications
-│   ├── architecture.md
-│   ├── business-requirements.md
-│   ├── data-model.md
-│   ├── deployment-guide.md
-│   └── ...
-├── power-bi/                          # Power BI assets
-│   ├── data-dictionary.md             # Semantic model data dictionary
-│   ├── measures.md                    # Complete DAX measures library
-│   └── report-design.md               # Visual design specifications
-├── power-platform/                    # Power Platform assets
+├── README.md                          # Kapsamlı kurumsal proje dokümantasyonu
+├── LICENSE                            # MIT Açık Kaynak Lisansı
+├── data/                              # Veri depolama alanı
+│   ├── generated/                     # Üretilen 11 ilişkisel CSV veri seti
+│   └── excel/                         # Dataverse içe aktarımı için Excel yedekleri
+├── docs/                              # Mimari, iş gereksinimleri ve dağıtım kılavuzları
+├── power-bi/                          # Power BI analitik varlıkları
+│   ├── data-dictionary.md             # Semantic model veri sözlüğü
+│   ├── measures.md                    # Eksiksiz DAX ölçü kütüphanesi
+│   └── report-design.md               # Rapor görsel tasarım şartnamesi
+├── power-platform/                    # Power Platform bileşenleri
 │   ├── solution-notes/
-│   │   └── fabric_load_tables.py      # PySpark Delta table loader for Fabric
-│   └── tables/                        # Dataverse table specifications
-├── python/                            # Data engineering scripts
-│   ├── generate_data.py               # Synthetic relational data generator
-│   ├── validate_data.py               # Automated data quality checker
-│   ├── extract_pdf_pages.py           # High-resolution report extractor
-│   └── requirements.txt               # Python dependencies
-├── sql/                               # Analytical SQL scripts
+│   │   └── fabric_load_tables.py      # Fabric için PySpark Delta tablo yükleyicisi
+│   └── tables/                        # Dataverse tablo tanımları
+├── python/                            # Veri mühendisliği scriptleri
+│   ├── generate_data.py               # Sentetik ilişkisel veri üreticisi
+│   ├── validate_data.py               # Otomatik veri kalitesi doğrulayıcısı
+│   ├── extract_pdf_pages.py           # Yüksek çözünürlüklü rapor çıkarıcı
+│   └── requirements.txt               # Python bağımlılıkları
+├── sql/                               # Analitik ve denetim SQL sorguları (6 dosya)
 │   ├── 01_schema_reference.sql
 │   ├── 02_operational_queries.sql
 │   ├── 03_sla_analysis.sql
 │   ├── 04_process_analysis.sql
-│   └── 05_data_quality_checks.sql
-└── screenshots/                       # 14 high-resolution platform screenshots
-    ├── fabric-semantic-model.png      # Star schema relationship view
-    ├── dataverse-tables.png           # Dataverse tables list
-    ├── powerapps-list.png             # Active issue list screen
-    ├── powerapps-form.png             # Issue submission form
-    ├── powerautomate-flow.png         # Cloud workflow design
-    └── powerbi-01 to 09 (*.png)       # 9 Power BI report pages
+│   ├── 05_data_quality_checks.sql
+│   └── 06_advanced_operational_analytics.sql
+└── screenshots/                       # 14 adet yüksek çözünürlüklü platform görseli
+    ├── fabric-semantic-model.png      # Yıldız şema ilişki diyagramı
+    ├── dataverse-tables.png           # Dataverse tablo listesi
+    ├── powerapps-list.png             # Aktif talep listesi ekranı
+    ├── powerapps-form.png             # Talep giriş formu ekranı
+    ├── powerautomate-flow.png         # Bulut akış tasarımı
+    └── powerbi-01 to 09 (*.png)       # 9 sayfalık Power BI rapor görselleri
 ```
 
 ---
 
-## 🎓 Key Competencies Demonstrated
+## 🎓 Sergilenen Temel Yetkinlikler
 
-- **Business Intelligence & Reporting:** Microsoft Power BI, DAX (Iterators, Time Intelligence, Measures), Report UX Design
-- **Cloud Analytics:** Microsoft Fabric Lakehouse, Delta Lake, Semantic Modeling, Star Schema Design
-- **Low-Code Business Applications:** Microsoft Power Apps (Canvas App, Dataverse CRUD, Forms)
-- **Workflow Automation:** Microsoft Power Automate, Event-Driven Triggers, Email Integration
-- **Data Engineering & Scripting:** Python 3.9, Pandas, Faker, Data Modeling, PySpark
-- **Database & Query Optimization:** SQL (PostgreSQL / Spark SQL), DDL, Window Functions, CTEs
-- **Version Control & Documentation:** Git, GitHub, Markdown, Mermaid Diagrams
+- **İş Zekası & Raporlama:** Microsoft Power BI, DAX (Iterators, Time Intelligence, Measures), Rapor Tasarımı & UX
+- **Bulut Veri Mimarisi:** Microsoft Fabric Lakehouse, Delta Lake, Semantic Modeling, Yıldız Şema (Star Schema) Tasarımı
+- **Düşük Kodlu İş Uygulamaları (Low-Code):** Microsoft Power Apps (Canvas App, Dataverse CRUD, Form Yönetimi)
+- **İş Akışı Otomasyonu:** Microsoft Power Automate, Olay Odaklı Tetikleyiciler (Event-Driven Triggers), E-posta Entegrasyonu
+- **Veri Mühendisliği & Betik Geliştirme:** Python 3.9, Pandas, Faker, Veri Modelleme, PySpark
+- **Veritabanı & Sorgu Optimizasyonu:** SQL (PostgreSQL / Spark SQL), DDL, Pencere Fonksiyonları (Window Functions), CTE
+- **Versiyon Kontrolü & Dokümantasyon:** Git, GitHub, Markdown, Mermaid Diyagramları
 
 ---
 
-*This project was developed as a portfolio and demonstration project. All data is synthetic; no confidential or real personal information is used.*
+*Bu proje, staj ve iş başvuruları için teknik portföy projesi olarak geliştirilmiştir. Tüm veriler sentetiktir; hiçbir gizli veya gerçek kurumsal/kişisel bilgi içermez.*
