@@ -24,14 +24,12 @@ print("=" * 45)
 
 for table_name, csv_file in csv_tables.items():
     try:
-        csv_path = f"abfss://{mssparkutils.lakehouse.get().id}@onelake.dfs.fabric.microsoft.com/{mssparkutils.lakehouse.get().workspaceId}/Files/{csv_file}"
-        
         df = spark.read.option("header", "true").option("inferSchema", "true").csv(f"{files_path}{csv_file}")
-        
-        df.write.mode("overwrite").format("delta").saveAsTable(table_name)
-        
-        print(f"  ✅ {table_name:20s} → {df.count():,} rows loaded")
-    except Exception as e:
-        print(f"  ❌ {table_name:20s} → ERROR: {e}")
 
-print("\n✅ All tables loaded. Check 'Tables' section on the left.")
+        df.write.mode("overwrite").format("delta").saveAsTable(table_name)
+
+        print(f"  ✅ {table_name:20s} → {df.count():,} satır yüklendi")
+    except Exception as e:
+        print(f"  ❌ {table_name:20s} → HATA: {e}")
+
+print("\n✅ Tüm tablolar yüklendi. Soldaki 'Tables' bölümünü kontrol edin.")

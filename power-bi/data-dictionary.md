@@ -1,166 +1,117 @@
-# OpsInsight — Power BI Data Dictionary
+# OpsInsight — Semantic Model Veri Sözlüğü
 
-**Version:** 1.0  
-**Date:** October 2026  
-
----
-
-## Tables in Semantic Model
-
-| Table | Source | Description |
-|-------|--------|-------------|
-| Issues | issues.csv / Dataverse | Core transactional table |
-| IssueHistory | issue_history.csv / Dataverse | Event log for process analytics |
-| Departments | departments.csv / Dataverse | Department lookup |
-| Teams | teams.csv / Dataverse | Team lookup |
-| IssueCategories | categories.csv / Dataverse | Category lookup |
-| SLARules | sla_rules.csv / Dataverse | SLA configuration |
-| RootCauses | root_causes.csv / Dataverse | Root cause lookup |
-| ResolutionCodes | resolution_codes.csv / Dataverse | Resolution type lookup |
-| Escalations | escalations.csv / Dataverse | Escalation records |
-| DimDate | Calculated in Power Query | Date dimension table |
-| _Measures | Calculated | All DAX measures |
+**Sürüm:** 2.0 · **Tarih:** Ekim 2026  
+**Kaynak:** Microsoft Fabric Lakehouse — 11 Delta tablo (`fabric_load_tables.py` ile yüklenir)
 
 ---
 
-## Issues Table
+## 1. Modeldeki Tablolar
 
-| Column | Type | Description |
-|--------|------|-------------|
-| IssueId | Text | Primary key |
-| IssueNumber | Text | Unique ticket number (OPS-YYYY-NNNN) |
-| Title | Text | Short issue description |
-| Description | Text | Full issue description |
-| CreatedBy | Text | FK → Employees (EmployeeId) |
-| CreatedByName | Text | Denormalized name |
-| CreatedAt | DateTime | Issue submission timestamp |
-| DepartmentId | Text | FK → Departments |
-| DepartmentCode | Text | Denormalized code |
-| CategoryId | Text | FK → IssueCategories |
-| CategoryName | Text | Denormalized name |
-| AssignedTeamId | Text | FK → Teams |
-| AssignedTeamName | Text | Denormalized name |
-| AssignedAgentId | Text | FK → Employees |
-| AssignedAgentName | Text | Denormalized name |
-| Priority | Text | Critical / High / Medium / Low |
-| Status | Text | Current lifecycle status |
-| SLAId | Text | FK → SLARules |
-| SLATargetHours | Decimal | SLA hours from rule |
-| SLADeadline | DateTime | Calculated deadline |
-| FirstResponseAt | DateTime | First agent action timestamp |
-| ResolvedAt | DateTime | Resolution timestamp |
-| ClosedAt | DateTime | Close timestamp |
-| RootCauseId | Text | FK → RootCauses |
-| ResolutionCodeId | Text | FK → ResolutionCodes |
-| ResolutionSummary | Text | Free-text resolution |
-| ReopenCount | Integer | Number of reopens |
-| LastUpdatedAt | DateTime | Last modification |
-
-**Calculated columns added in Power Query:**
-| Column | Description |
-|--------|-------------|
-| PriorityOrder | Integer sort key (Critical=1, Low=4) |
-| IsResolved | Boolean — Resolved or Closed |
-| IsSLABreached | Boolean — SLA was exceeded |
-| CreatedMonth | Date — Start of creation month |
-| CreatedYear | Integer |
-| SLA Target Hours | From SLARules via RELATED() |
-| SLAPctConsumed | % of SLA used |
-| SLAStatusLabel | Healthy/Warning/Critical/Breached/Completed |
-| ResolutionDurationHours | Hours from creation to resolution |
+| Tablo | Kayıt | Rol | Açıklama |
+|---|---:|---|---|
+| `issues` | 2.200 | Fact | Ana talep tablosu; tüm ölçüler bu tablo üzerinde tanımlıdır |
+| `issue_history` | 11.232 | Olay (Event Fact) | Statü değişikliği, atama ve transfer günlüğü |
+| `escalations` | 315 | Olay (Event Fact) | SLA aşımı sonrası yöneticiye yapılan eskalasyonlar |
+| `comments` | 4.073 | Bağımsız analiz tablosu | Dahili notlar ve talep sahibi yazışmaları |
+| `employees` | 96 | Bağımsız analiz tablosu | Çalışan rehberi (talep sahibi, temsilci, yönetici) |
+| `departments` | 6 | Boyut | Departman listesi ve yöneticileri |
+| `teams` | 10 | Boyut | Operasyon ekipleri |
+| `categories` | 24 | Boyut | Departmana bağlı talep kategorileri |
+| `sla_rules` | 4 | Boyut | Öncelik bazlı SLA hedef saatleri ve eşikleri |
+| `root_causes` | 10 | Boyut | Kök neden kataloğu |
+| `resolution_codes` | 9 | Boyut | Kapanış yöntemi kataloğu |
 
 ---
 
-## IssueHistory Table
+## 2. `issues` Tablosu
 
-| Column | Type | Description |
-|--------|------|-------------|
-| HistoryId | Text | Primary key |
-| IssueId | Text | FK → Issues |
-| EventType | Text | Created/Assigned/StatusChanged/etc. |
-| PreviousStatus | Text | Status before change |
-| NewStatus | Text | Status after change |
-| PreviousTeam | Text | Team before transfer |
-| NewTeam | Text | Team after transfer |
-| ChangedBy | Text | Employee ID or "SYSTEM" |
-| ChangeTimestamp | DateTime | Event timestamp |
-| Notes | Text | Additional context |
+| Sütun | Tür | Açıklama |
+|---|---|---|
+| `IssueId` | Metin | Birincil anahtar |
+| `IssueNumber` | Metin | Talep numarası (`OPS-YYYY-NNNN`) |
+| `Title` / `Description` | Metin | Talep başlığı ve açıklaması |
+| `CreatedBy` / `CreatedByName` | Metin | Talep sahibi kimliği ve denormalize adı |
+| `CreatedAt` | Tarih-Saat | Talebin oluşturulma zamanı |
+| `DepartmentId` / `DepartmentCode` | Metin | Departman anahtarı ve kodu (`IT`, `FIN`, `HR`, `PROC`, `OPS`, `SALES`) |
+| `CategoryId` / `CategoryName` | Metin | Kategori anahtarı ve adı |
+| `AssignedTeamId` / `AssignedTeamName` | Metin | Atanan ekip anahtarı ve adı |
+| `AssignedAgentId` / `AssignedAgentName` | Metin | Atanan temsilci anahtarı ve adı |
+| `Priority` | Metin | Critical / High / Medium / Low |
+| `Status` | Metin | New, Assigned, In Progress, Waiting, Resolved, Closed, Reopened, Cancelled |
+| `SLAId` / `SLATargetHours` / `SLADeadline` | Metin / Ondalık / Tarih-Saat | SLA kuralı, hedef saat ve son teslim zamanı |
+| `FirstResponseAt` / `ResolvedAt` / `ClosedAt` | Tarih-Saat | İlk yanıt, çözüm ve kapanış zamanları |
+| `RootCauseId` / `ResolutionCodeId` | Metin | Kök neden ve çözüm kodu anahtarları |
+| `ResolutionSummary` | Metin | Çözüm açıklaması |
+| `ReopenCount` | Tam sayı | Yeniden açılma sayısı |
+| `LastUpdatedAt` | Tarih-Saat | Son güncelleme zamanı |
 
----
+### Hesaplanan Sütunlar
 
-## DimDate Table
-
-| Column | Type | Description |
-|--------|------|-------------|
-| Date | Date | Calendar date (primary key) |
-| Year | Integer | Calendar year |
-| Month | Integer | Month number (1-12) |
-| MonthName | Text | "January" etc. |
-| Quarter | Text | "Q1" etc. |
-| Weekday | Text | "Monday" etc. |
-| IsWeekend | Boolean | Saturday or Sunday |
-
----
-
-## Key Measures Reference
-
-| Measure | Description | Format |
-|---------|-------------|--------|
-| Total Issues | Count of all issues | Whole number |
-| Open Issues | Issues in active statuses | Whole number |
-| Resolved Issues | Resolved + Closed | Whole number |
-| SLA Breached Issues | Count of breached | Whole number |
-| SLA Compliance % | Resolved within SLA / Total resolved | % |
-| Avg Resolution Time Hours | Mean hours to resolve | Decimal |
-| Median Resolution Time Hours | Median hours | Decimal |
-| Avg First Response Time Hours | Mean hours to first action | Decimal |
-| Backlog | Currently unresolved | Whole number |
-| Reopen Rate % | Reopened / Resolved | % |
-| MoM Issue Change | This month vs last month | Whole number |
-| MoM Issue Change % | % change month over month | % |
-| Avg SLA Consumed % | Mean % of SLA used | % |
-| Avg Transfers per Issue | Mean transfers | Decimal |
-| Avg Status Changes per Issue | Mean events | Decimal |
-| Avg Time in Waiting Hours | Mean hours in Waiting | Decimal |
-| Issues Created YTD | Year-to-date created | Whole number |
-| SLA Compliance Rolling 3M | Rolling 3-month compliance | % |
+| Sütun | Tür | Açıklama |
+|---|---|---|
+| `CreatedMonth` | Tarih | Oluşturulma ayının ilk günü (trend ekseni) |
+| `FirstResponseDurationHours` | Ondalık | `CreatedAt → FirstResponseAt` arası saat |
+| `ResolutionDurationHours` | Ondalık | `CreatedAt → ResolvedAt` arası saat |
+| `IsSLABreached` | Mantıksal | Çözüm zamanı (açık taleplerde şu an) `SLADeadline`'ı aştı mı? |
 
 ---
 
-## Relationship Summary
+## 3. `issue_history` Tablosu
 
-| From | To | Type |
-|------|----|------|
-| DimDate[Date] | Issues[CreatedAt] (date) | 1:N |
-| Departments[DepartmentId] | Issues[DepartmentId] | 1:N |
-| Teams[TeamId] | Issues[AssignedTeamId] | 1:N |
-| IssueCategories[CategoryId] | Issues[CategoryId] | 1:N |
-| SLARules[SLAId] | Issues[SLAId] | 1:N |
-| RootCauses[RootCauseId] | Issues[RootCauseId] | 1:N |
-| ResolutionCodes[ResolutionCodeId] | Issues[ResolutionCodeId] | 1:N |
-| Issues[IssueId] | IssueHistory[IssueId] | 1:N |
-| Issues[IssueId] | Escalations[IssueId] | 1:N |
-| Departments[DepartmentId] | Teams[DepartmentId] | 1:N |
-
-All relationships: **Single** cross-filter direction, **Active**.
+| Sütun | Tür | Açıklama |
+|---|---|---|
+| `HistoryId` | Metin | Birincil anahtar |
+| `IssueId` | Metin | `issues` tablosuna yabancı anahtar |
+| `EventType` | Metin | Created, Assigned, StatusChanged, Transferred, Resolved, Closed, Reopened |
+| `PreviousStatus` / `NewStatus` | Metin | Geçiş öncesi ve sonrası statü |
+| `PreviousTeam` / `NewTeam` | Metin | Transfer öncesi ve sonrası ekip |
+| `ChangedBy` | Metin | Değişikliği yapan çalışan veya `SYSTEM` |
+| `ChangeTimestamp` | Tarih-Saat | Olay zamanı |
+| `Notes` | Metin | Ek açıklama |
 
 ---
 
-## Data Quality Notes
+## 4. İlişkiler
 
-- Empty string timestamps treated as null in Power Query
-- Priority sort uses PriorityOrder integer column
-- SLAPctConsumed uses ResolvedAt if resolved, else NOW()
-- IsSLABreached calculates against resolved timestamp if closed
-- History table may have "SYSTEM" as ChangedBy — not a valid EmployeeId
+| Kaynak (1) | Hedef (N) | Anahtar | Durum |
+|---|---|---|---|
+| `departments` | `issues` | `DepartmentId` | Aktif |
+| `categories` | `issues` | `CategoryId` | Aktif |
+| `teams` | `issues` | `TeamId → AssignedTeamId` | Aktif |
+| `sla_rules` | `issues` | `SLAId` | Aktif |
+| `root_causes` | `issues` | `RootCauseId` | Aktif |
+| `resolution_codes` | `issues` | `ResolutionCodeId` | Aktif |
+| `issues` | `issue_history` | `IssueId` | Aktif |
+| `issues` | `escalations` | `IssueId` | Aktif |
+| `departments` | `teams` | `DepartmentId` | Pasif (belirsiz filtre yolunu önlemek için) |
+| `departments` | `categories` | `DepartmentId` | Pasif (belirsiz filtre yolunu önlemek için) |
+
+Tüm aktif ilişkiler **tek yönlü** çapraz filtre kullanır. `employees` ve `comments` tabloları bilinçli olarak ilişkisiz tutulmuştur; çalışan bilgisi için `issues` içindeki denormalize isim alanları kullanılır.
 
 ---
 
-## Report Slicers (Global)
+## 5. Çekirdek Ölçüler
 
-| Slicer | Field | All Pages |
-|--------|-------|-----------|
-| Date Range | DimDate[Date] | Yes |
-| Department | Departments[DepartmentName] | Yes |
-| Priority | Issues[Priority] | Yes |
-| Status | Issues[Status] | Yes |
+| Ölçü | Açıklama | Biçim |
+|---|---|---|
+| `Total Issues` | Toplam talep sayısı | Tam sayı |
+| `Open Issues` | Aktif statülerdeki talepler | Tam sayı |
+| `Resolved Issues` | Resolved + Closed | Tam sayı |
+| `Backlog` | Çözülmemiş iş yükü | Tam sayı |
+| `SLA Breached Issues` | SLA'yı aşan talepler | Tam sayı |
+| `SLA Compliance %` | Çözülenler içinde SLA'ya uyanların oranı | % |
+| `Avg Resolution Time Hours` | Ortalama çözüm süresi | Ondalık |
+| `Avg First Response Time Hours` | Ortalama ilk yanıt süresi | Ondalık |
+| `Avg SLA Target Hours` | Ortalama SLA hedefi | Ondalık |
+| `Escalation Rate %` | Eskalasyon / toplam talep | % |
+
+Genişletilmiş ölçü tasarımları için: [`measures.md`](measures.md)
+
+---
+
+## 6. Veri Kalitesi Notları
+
+- Boş zaman damgaları `null` olarak ele alınır.
+- `IsSLABreached`, çözülmüş taleplerde `ResolvedAt`, açık taleplerde `NOW()` ile hesaplanır.
+- `issue_history[ChangedBy]` alanı `SYSTEM` değeri alabilir; geçerli bir `EmployeeId` değildir.
+- Saniye hassasiyetli zaman damgaları kategorik eksenlerde kullanılmaz; bunun yerine `CreatedMonth` kullanılır.
