@@ -56,7 +56,7 @@ flowchart TD
     subgraph OP["Operasyonel Katman — Power Platform"]
         CSV --> DV["Microsoft Dataverse<br/>11 Özel Tablo (cr489_*)"]
         DV --> PA["Power Apps<br/>Sorun Yönetimi ve Talep Açma Uygulaması"]
-        DV --> PF["Power Automate<br/>Gerçek Zamanlı SLA ve Eskalasyon Akışları"]
+        DV --> PF["Power Automate<br/>Kritik Talep Uyarısı ve Departman Yönlendirme"]
     end
 
     subgraph AN["Analitik Katman — Microsoft Fabric & Power BI"]
@@ -203,14 +203,117 @@ Microsoft Dataverse ortamında oluşturulmuş; özel şemalar, birincil anahtarl
 
 ---
 
-## ⚡ Power Automate — Olay Odaklı SLA Otomasyonu
+## ⚡ Power Automate — Kritik Talep Uyarısı ve Departman Bazlı Akıllı Yönlendirme
 
-Dataverse'i gerçek zamanlı izleyen ve anında aksiyon alan otomatik bulut akışı:
+**Akış adı:** `OpsInsight – Critical Issue Department Alert`
 
-1. **Tetikleyici (Trigger):** `Bir satır eklendiğinde, değiştirildiğinde veya silindiğinde` — Microsoft Dataverse (Kapsam: Kuruluş / Organization)
-2. **Eylem (Action):** `E-posta gönder (V2)` — Office 365 Outlook üzerinden talep numarası, öncelik, başlık ve açıklama bilgilerini içeren otomatik bildirim.
+Bu akış, Dataverse'e eklenen her yeni talebi anında kontrol eder. Herkese toplu e-posta göndermek yerine **yalnızca öncelik seviyesi `Critical` olan talepleri** yakalar ve talebin ait olduğu departmanın yöneticisine **yüksek önemli** bir uyarı e-postası gönderir. Amaç, gereksiz bildirim kalabalığını (alert fatigue) önlemek ve 4 saatlik kritik SLA süresi dolmadan doğru kişinin harekete geçmesini sağlamaktır.
 
-![Power Automate Akış Tasarımı](screenshots/powerautomate-flow.png)
+### 🔀 Akış Mimarisi
+
+```mermaid
+flowchart TD
+    A(["📝 Power Apps<br/>Yeni talep kaydı"]) --> B[("🗃️ Dataverse<br/>cr489_issues")]
+    B --> T{{"⚡ Tetikleyici<br/>Bir satır eklendiğinde<br/>Değişiklik türü: Eklendi"}}
+    T --> C{"🔍 Koşul<br/>Priority = Critical ?"}
+
+    C -- "Hayır" --> N(["✅ İşlem yapılmaz<br/>Standart SLA kuyruğu"])
+    C -- "Evet" --> S{"🔀 Switch<br/>DepartmentCode"}
+
+    S -- "IT" --> E1["📧 Sarah Mitchell<br/>Bilgi Teknolojileri"]
+    S -- "FIN" --> E2["📧 David Thompson<br/>Finans"]
+    S -- "HR" --> E3["📧 Emma Clarke<br/>İnsan Kaynakları"]
+    S -- "PROC" --> E4["📧 Robert Hughes<br/>Satın Alma"]
+    S -- "OPS" --> E5["📧 Linda Foster<br/>Operasyon"]
+    S -- "SALES" --> E6["📧 Mark Patterson<br/>Satış Operasyonları"]
+    S -- "Default" --> E7["📧 Genel Operasyon Masası<br/>Eşleşmeyen / boş kod"]
+
+    E1 & E2 & E3 & E4 & E5 & E6 & E7 --> R(["🚨 Yönetici 4 saatlik<br/>kritik SLA içinde aksiyon alır"])
+
+    classDef source fill:#742774,stroke:#4a1a4a,color:#fff
+    classDef data fill:#0B556A,stroke:#063542,color:#fff
+    classDef trigger fill:#0066FF,stroke:#0047b3,color:#fff
+    classDef decision fill:#F2C811,stroke:#b39200,color:#000
+    classDef mail fill:#E8F1FB,stroke:#0078D4,color:#003a6b
+    classDef fallback fill:#FDECEA,stroke:#C62828,color:#7f1d1d
+    classDef done fill:#E8F5E9,stroke:#2E7D32,color:#1b5e20
+
+    class A source
+    class B data
+    class T trigger
+    class C,S decision
+    class E1,E2,E3,E4,E5,E6 mail
+    class E7 fallback
+    class N,R done
+```
+
+### ⏱️ Uçtan Uca Senaryo (Örnek: IT Departmanında Kritik Talep)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Çalışan
+    participant PA as Power Apps
+    participant DV as Dataverse
+    participant PF as Power Automate
+    participant O as Office 365 Outlook
+    actor M as IT Yöneticisi<br/>Sarah Mitchell
+
+    U->>PA: "VPN erişimi tamamen kesildi" talebi oluşturur<br/>Öncelik: Critical · Departman: IT
+    PA->>DV: Yeni satır kaydedilir (cr489_issues)
+    DV-->>PF: Tetikleyici çalışır (satır eklendi)
+    PF->>PF: Koşul kontrolü → Priority = Critical ✔
+    PF->>PF: Switch → DepartmentCode = IT
+    PF->>O: E-posta gönder (V2) · Önem: Yüksek
+    O-->>M: 🚨 [KRİTİK SLA] Yeni talep bildirimi
+    M->>PA: Talebi üstlenir ve çözüm sürecini başlatır
+```
+
+### 🗺️ Yönlendirme Tablosu
+
+| `DepartmentCode` | Departman | Bildirim Alıcısı | Kritik SLA Hedefi |
+|:---:|---|---|:---:|
+| `IT` | Bilgi Teknolojileri | Sarah Mitchell | 4 saat |
+| `FIN` | Finans | David Thompson | 4 saat |
+| `HR` | İnsan Kaynakları | Emma Clarke | 4 saat |
+| `PROC` | Satın Alma | Robert Hughes | 4 saat |
+| `OPS` | Operasyon | Linda Foster | 4 saat |
+| `SALES` | Satış Operasyonları | Mark Patterson | 4 saat |
+| *Default* | Eşleşmeyen / boş kod | Genel Operasyon Masası | 4 saat |
+
+### 📧 E-posta İçeriği
+
+Her dalda aynı şablon kullanılır; içerik Dataverse'ten gelen dinamik alanlarla doldurulur:
+
+```text
+Konu   : [KRİTİK SLA] Yeni Talep – {Title}
+Önem   : Yüksek (High)
+
+Sayın {Departman Yöneticisi},
+
+Departmanınıza kritik öncelikli yeni bir talep atanmıştır.
+
+  Talep No   : {IssueNumber}
+  Başlık     : {Title}
+  Öncelik    : {Priority}
+  Departman  : {DepartmentCode}
+  Açıklama   : {Description}
+  Oluşturulma: {CreatedOn}
+
+Kritik taleplerde SLA hedefi 4 saattir. Lütfen talebi en kısa sürede üstlenin.
+
+— OpsInsight Otomatik Bildirim Sistemi
+```
+
+### 🧠 Tasarım Kararları
+
+| Karar | Gerekçe |
+|---|---|
+| **Yalnızca `Eklendi` tetikleyicisi** | Kayıt her güncellendiğinde aynı uyarının tekrar gönderilmesini engeller. |
+| **Önce Koşul, sonra Switch** | Kritik olmayan talepler en başta elenir; akış gereksiz yere dallara girmez. |
+| **İç içe If yerine `Switch`** | 6 departman için okunması ve bakımı kolay tek bir yapı; yeni departman eklemek yalnızca bir `Case` eklemek demektir. |
+| **`Default` güvenlik dalı** | Departman kodu boş veya hatalı gelse bile kritik talep sahipsiz kalmaz. |
+| **Yüksek önem (High Importance)** | Uyarı, yöneticinin gelen kutusunda diğer e-postalardan ayrışır. |
 
 ---
 
@@ -269,12 +372,11 @@ opsinsight-power-platform/
 │   ├── 04_process_analysis.sql
 │   ├── 05_data_quality_checks.sql
 │   └── 06_advanced_operational_analytics.sql
-└── screenshots/                       # 14 adet yüksek çözünürlüklü platform görseli
+└── screenshots/                       # 13 adet yüksek çözünürlüklü platform görseli
     ├── fabric-semantic-model.png      # Yıldız şema ilişki diyagramı
     ├── dataverse-tables.png           # Dataverse tablo listesi
     ├── powerapps-list.png             # Aktif talep listesi ekranı
     ├── powerapps-form.png             # Talep giriş formu ekranı
-    ├── powerautomate-flow.png         # Bulut akış tasarımı
     └── powerbi-01 to 09 (*.png)       # 9 sayfalık Power BI rapor görselleri
 ```
 
@@ -285,7 +387,7 @@ opsinsight-power-platform/
 - **İş Zekası & Raporlama:** Microsoft Power BI, DAX (Iterators, Time Intelligence, Measures), Rapor Tasarımı & UX
 - **Bulut Veri Mimarisi:** Microsoft Fabric Lakehouse, Delta Lake, Semantic Modeling, Yıldız Şema (Star Schema) Tasarımı
 - **Düşük Kodlu İş Uygulamaları (Low-Code):** Microsoft Power Apps (Canvas App, Dataverse CRUD, Form Yönetimi)
-- **İş Akışı Otomasyonu:** Microsoft Power Automate, Olay Odaklı Tetikleyiciler (Event-Driven Triggers), E-posta Entegrasyonu
+- **İş Akışı Otomasyonu:** Microsoft Power Automate, Olay Odaklı Tetikleyiciler (Event-Driven Triggers), Koşullu Mantık, Switch ile Departman Bazlı Yönlendirme, E-posta Entegrasyonu
 - **Veri Mühendisliği & Betik Geliştirme:** Python 3.9, Pandas, Faker, Veri Modelleme, PySpark
 - **Veritabanı & Sorgu Optimizasyonu:** SQL (PostgreSQL / Spark SQL), DDL, Pencere Fonksiyonları (Window Functions), CTE
 - **Versiyon Kontrolü & Dokümantasyon:** Git, GitHub, Markdown, Mermaid Diyagramları
